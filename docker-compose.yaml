@@ -1,0 +1,106 @@
+version: "3"
+
+networks:
+  main-net:
+
+volumes:
+  dbdata:
+
+services:
+  traefik-proxy:
+    image: traefik
+    container_name: "traefik-proxy"
+    command: --api --docker  # Enables the web UI and tells Træfik to listen to docker
+    environment:
+      - "DO_AUTH_TOKEN=${DOTOKEN}"
+    ports:
+      - "80:80"
+      - "443:443"
+    networks:
+      - main-net
+    restart: always
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock"
+      - "./traefik/traefik.toml:/traefik.toml"
+      - "./traefik/acme.json:/acme.json"
+    labels:
+      - traefik.backend=traefik-proxy
+      - traefik.frontend.rule=Host:traefik.${COREDOMAIN}
+      - traefik.port=8080
+      - traefik.frontend.priority=100
+
+  nginx-main:
+    image: nginx:latest
+    container_name: "nginx-main"
+    networks:
+      - main-net
+    depends_on:
+      - traefik-proxy
+    restart: always
+    volumes:
+      - "./nginx/content:/usr/share/nginx/html"
+      - "./nginx/config/default.conf:/etc/nginx/conf.d/default.conf"
+      - "./nginx/logs/:/var/log/nginx/"
+      - "/etc/letsencrypt/:/etc/letsencrypt/"
+    labels:
+      - traefik.backend=nginx-main
+      - traefik.frontend.rule=HostRegexp:{alldomains:.*}
+      - traefik.port=80
+      - traefik.frontend.priority=1
+      
+  nodejs1:
+    image: node:latest
+    container_name: "nodejs1"
+    restart: always
+    command: ["npm", "run", "dostart"]
+    environment: 
+      NODE_ENV: dev
+      NODE_PORT: ${NODE_PORT}
+      IS_PROD: "false"
+      # PGHOST: 'db-main'
+      # PGDATABASE: 'nodejs1'
+      # PGUSER: 'postgres'
+      # PGPASSWORD: '${DBPW}'
+    working_dir: /home/app
+    networks:
+      - main-net
+    depends_on:
+      - traefik-proxy
+      # - db-main
+    volumes:
+      - "./nodejs1:/home/app"
+    labels:
+      - traefik.backend=nodejs1
+      - traefik.frontend.rule=Host:node1.${COREDOMAIN}
+      - traefik.port=${NODE_PORT}
+      - traefik.frontend.priority=100
+
+  # POSTGRES DB
+  # db-main:
+  #   image: postgres:latest
+  #   container_name: "db-main"
+  #   restart: always
+  #   networks:
+  #     - main-net
+  #   environment:
+  #     POSTGRES_PASSWORD: '${DBPW}'
+  #   volumes:
+  #     - "dbdata:/var/lib/postgresql/data"
+  #   labels:
+  #     - traefik.backend=db-main
+
+  # MONGO DB
+  # WIP NOT READY
+  # db-main:
+  #   image: mongo
+  #   container_name: "db-main"
+  #   restart: always
+  #   networks:
+  #     - main-net
+  #   environment:
+  #     MONGO_INITDB_ROOT_USERNAME: root
+  #     MONGO_INITDB_ROOT_PASSWORD: example
+  #   volumes:
+  #     - "dbdata:/var/lib/postgresql/data"
+  #   labels:
+  #     - traefik.backend=db-main

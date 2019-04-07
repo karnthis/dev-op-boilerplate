@@ -1,0 +1,4 @@
+#!/bin/sh
+cd /_prod
+git pull
+docker-compose restart

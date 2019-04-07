@@ -1,0 +1,12 @@
+{
+  "name": "nodejs1",
+  "version": "1.0.0",
+  "description": "Placeholder shell",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dostart": "node ./index.js"
+  },
+  "author": "",
+  "license": "MIT"
+}

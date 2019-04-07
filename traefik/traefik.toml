@@ -1,0 +1,25 @@
+# defaultEntryPoints = ["http", "https"]
+defaultEntryPoints = ["https"]
+
+[entryPoints]
+  [entryPoints.http]
+  address = ":80"
+    [entryPoints.http.redirect]
+      entryPoint = "https"
+  [entryPoints.https]
+  address = ":443"
+    [entryPoints.https.tls]
+
+[acme]
+email = "EMAIL"
+storage = "acme.json"
+caServer = "https://acme-v02.api.letsencrypt.org/directory"
+entryPoint = "https"
+  [acme.dnsChallenge]
+  provider = "digitalocean" # DNS Provider name (cloudflare, OVH, gandi...)
+  delayBeforeCheck = 0
+
+[[acme.domains]]
+  main = "*.MYDOMAIN"
+  sans = ["MYDOMAIN"]
+
