@@ -44,7 +44,11 @@ services:
       - "/etc/letsencrypt/:/etc/letsencrypt/"
     labels:
       - traefik.backend=nginx-main
-      - traefik.frontend.rule=HostRegexp:{alldomains:.*}
+      ## Pick one of the following
+      ## All unclaimed traffic routed here
+      # - traefik.frontend.rule=HostRegexp:{alldomains:.*}
+      ## Root domain and all unclaimed subdomains of root routed here
+      # - traefik.frontend.rule=HostRegexp:${COREDOMAIN}, {subdomain:[a-z0-9]+}.${COREDOMAIN}
       - traefik.port=80
       - traefik.frontend.priority=1
       
